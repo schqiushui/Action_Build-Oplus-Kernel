@@ -71,7 +71,7 @@ jobs:
       - name: Parse Device Name # 解析机型名称
         id: deviceinfo
         run: |
-          FEIL="${{ inputs.FEIL }}"
+          FILE="${{ inputs.FILE }}"
 
           # 移除末尾的 _v（如果有）
           BASE_NAME="${FILE%_u}"
@@ -136,7 +136,7 @@ jobs:
       - name: Initialize repo and sync # 初始化 repo 和同步
         run: |
           mkdir "$WORKSPACE" && cd "$WORKSPACE"
-          repo init -u https://github.com/schqiushui/kernel_manifest.git -b refs/heads/oneplus/${{ inputs.SoC }} -m ${{ inputs.FEIL }}.xml --depth=1 || { echo "repo init 失败"; exit 1; }
+          repo init -u https://github.com/schqiushui/kernel_manifest.git -b refs/heads/oneplus/${{ inputs.SoC }} -m ${{ inputs.FILE }}.xml --depth=1 || { echo "repo init 失败"; exit 1; }
           repo sync -c -j$(nproc --all) --no-tags || { echo "repo sync 失败"; exit 1; }
           git clone https://github.com/schqiushui/clang_host_linux-x86_clang-r522817.git $PLATFORM/prebuilts/clang/host/linux-x86/clang-r522817
 
@@ -310,25 +310,25 @@ jobs:
       - name: Upload AnyKernel3 # 上传 AnyKernel3
         uses: actions/upload-artifact@v4
         with:
-          name: "AnyKernel3-${{ inputs.FEIL }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}"
+          name: "AnyKernel3-${{ inputs.FILE }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}"
           path: ${{ env.WORKSPACE }}/AnyKernel3-KernelSU-Next/*
 
       - name: Upload Image # 上传 Image
         uses: actions/upload-artifact@v4
         with:
-          name: "Image-${{ inputs.FEIL }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}"
+          name: "Image-${{ inputs.FILE }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}"
           path: ${{ env.WORKSPACE }}/image_output/*
 
       - name: Zip AnyKernel3 # 创建 AnyKernel3 压缩文件
         run: |
           cd "$WORKSPACE/AnyKernel3-KernelSU-Next"
-          zip -r "$WORKSPACE/AnyKernel3-${{ inputs.FEIL }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}.zip" *
+          zip -r "$WORKSPACE/AnyKernel3-${{ inputs.FILE }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}.zip" *
 
       - name: Create Release version and upload # 创建正式版本并上传
         uses: softprops/action-gh-release@v2
         with:
           name: "内核发布: ${{ steps.deviceinfo.outputs.brand }}$ {{ steps.deviceinfo.outputs.model }} - ${{ steps.formatted_date.outputs.formatted }}"
-          tag_name: "${{ inputs.FEIL }}-${{ steps.formatted_date.outputs.formatted }}"
+          tag_name: "${{ inputs.FILE }}-${{ steps.formatted_date.outputs.formatted }}"
           body: |
             OnePlus Kernel Build
             - Device 机型: `${{ steps.deviceinfo.outputs.brand }} ${{ steps.deviceinfo.outputs.model }}`
