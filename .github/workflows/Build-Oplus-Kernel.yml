@@ -91,7 +91,8 @@ jobs:
             *)       BRAND="$(echo "$RAW_BRAND" | sed 's/.*/\u&/')" ;;  # 默认只大写首字母
           esac
 
-          echo "device=${BRAND} ${MODEL}" >> $GITHUB_OUTPUT
+          echo "brand=${BRAND}" >> $GITHUB_OUTPUT
+          echo "model=${MODEL}" >> $GITHUB_OUTPUT
 
       - name: Set Environment Variable # 设置内核环境变量
         run: |
@@ -320,17 +321,17 @@ jobs:
 
       - name: Zip AnyKernel3 # 创建 AnyKernel3 压缩文件
         run: |
-          cd "$WORKSPACE"
-          zip -r "AnyKernel3-${{ inputs.FEIL }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}.zip" AnyKernel3-KernelSU-Next
+          cd "$WORKSPACE/AnyKernel3-KernelSU-Next"
+          zip -r "$WORKSPACE/AnyKernel3-${{ inputs.FEIL }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}.zip" *
 
       - name: Create Release version and upload # 创建正式版本并上传
         uses: softprops/action-gh-release@v2
         with:
-          name: "内核发布 - ${{ inputs.FEIL }} - ${{ steps.formatted_date.outputs.formatted }}"
+          name: "内核发布: ${{ steps.deviceinfo.outputs.brand }}$ {{ steps.deviceinfo.outputs.model }} - ${{ steps.formatted_date.outputs.formatted }}"
           tag_name: "${{ inputs.FEIL }}-${{ steps.formatted_date.outputs.formatted }}"
           body: |
             OnePlus Kernel Build
-            - Device 机型: `${{ steps.deviceinfo.outputs.device }}`
+            - Device 机型: `${{ steps.deviceinfo.outputs.brand }} ${{ steps.deviceinfo.outputs.model }}`
             - SoC 型号: `${{ inputs.SoC }}`
             - Chipset 代号: `${{ inputs.Chipset }}`
             - KernelSU 类型: `${{ env.KSU_TYPE }}`
