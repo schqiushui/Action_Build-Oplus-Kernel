@@ -34,9 +34,9 @@ on:
         type: choice
         options:
           - Kernel_without_KSU
-          - SukiSU-dev
-          - SukiSU-stable
-        default: SukiSU-dev
+          - SukiSU_dev
+          - SukiSU_stable
+        default: SukiSU_dev
 
       SUSFS:
         description: "启用 SUSFS // Enable SUSFS"
@@ -67,6 +67,19 @@ jobs:
           KERNEL_VERSION=$(echo "$VERSION" | cut -d'-' -f2)
           echo "ANDROID_VERSION=$ANDROID_VERSION" >> $GITHUB_ENV
           echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
+
+      - name: Parse Device Name # 解析机型名称
+        id: deviceinfo
+        run: |
+          FEIL="${{ inputs.FEIL }}"
+          BRAND=$(echo "$FEIL" | cut -d'_' -f1)
+          MODEL=$(echo "$FEIL" | cut -d'_' -f2- | sed 's/_v$//')
+
+          echo "BRAND=${BRAND}"
+          echo "MODEL=${MODEL}"
+
+          BRAND_UPPER=$(echo "$BRAND" | sed 's/.*/\u&/')
+          echo "device=${BRAND_UPPER} ${MODEL}" >> $GITHUB_OUTPUT
 
       - name: Set Environment Variable # 设置内核环境变量
         run: |
@@ -116,9 +129,10 @@ jobs:
       - name: Get KernelSU version # 获取 KernelSU 版本
         if: ${{ startsWith(inputs.KSU_CONFIG, 'SukiSU') }}
         run: |
-          if [[ "${{ inputs.KSU_CONFIG }}" == "SukiSU-dev" ]]; then
+          echo "KSU_TYPE=$(echo '${{ inputs.KSU_CONFIG }}' | cut -d'_' -f1)" >> $GITHUB_ENV
+          if [[ "${{ inputs.KSU_CONFIG }}" == "SukiSU_dev" ]]; then
             echo "SukiSU_BRANCH=susfs-dev" >> $GITHUB_ENV
-          elif [[ "${{ inputs.KSU_CONFIG }}" == "SukiSU-stable" ]]; then
+          elif [[ "${{ inputs.KSU_CONFIG }}" == "SukiSU_stable" ]]; then
             echo "SukiSU_BRANCH=susfs-stable" >> $GITHUB_ENV
           fi
 
@@ -290,3 +304,31 @@ jobs:
         with:
           name: "Image-${{ inputs.FEIL }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}"
           path: ${{ env.WORKSPACE }}/image_output/*
+
+      - name: Zip AnyKernel3 # 创建 AnyKernel3 压缩文件
+        run: |
+          cd "$WORKSPACE"
+          zip -r "AnyKernel3-${{ inputs.FEIL }}-SukiSU-${{ env.KSUVER }}-${{ steps.formatted_date.outputs.formatted }}.zip" AnyKernel3-KernelSU-Next
+
+      - name: Create Release version and upload # 创建正式版本并上传
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "内核发布 - ${{ inputs.FEIL }} - ${{ steps.formatted_date.outputs.formatted }}"
+          tag_name: "${{ inputs.FEIL }}-${{ steps.formatted_date.outputs.formatted }}"
+          body: |
+            OnePlus Kernel Build
+            - Device 机型: `${{ steps.deviceinfo.outputs.device }}`
+            - SoC 型号: `${{ inputs.SoC }}`
+            - Chipset 代号: `${{ inputs.Chipset }}`
+            - KernelSU 类型: `${{ env.KSU_TYPE }}`
+            - Branch 版本: `${{ env.KSUVER }}`
+            - SUSFS 补丁: `${{ inputs.SUSFS }}`
+            - VFS 补丁: `${{ inputs.VFS_PATCH }}`
+            - Kernel 版本: `${{ inputs.VERSION }}`
+            - 构建时间: `${{ steps.formatted_date.outputs.formatted }}`
+          files: |
+            ${{ env.WORKSPACE }}/AnyKernel3-*.zip
+            ${{ env.WORKSPACE }}/image_output/boot.img
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
