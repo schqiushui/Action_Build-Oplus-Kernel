@@ -72,14 +72,26 @@ jobs:
         id: deviceinfo
         run: |
           FEIL="${{ inputs.FEIL }}"
-          BRAND=$(echo "$FEIL" | cut -d'_' -f1)
-          MODEL=$(echo "$FEIL" | cut -d'_' -f2- | sed 's/_v$//')
 
-          echo "BRAND=${BRAND}"
-          echo "MODEL=${MODEL}"
+          # 移除末尾的 _v（如果有）
+          BASE_NAME="${FILE%_u}"
+          BASE_NAME="${BASE_NAME%_v}"
 
-          BRAND_UPPER=$(echo "$BRAND" | sed 's/.*/\u&/')
-          echo "device=${BRAND_UPPER} ${MODEL}" >> $GITHUB_OUTPUT
+          # 提取品牌（第一个下划线前的部分）
+          RAW_BRAND="${BASE_NAME%%_*}"
+
+          # 提取型号（品牌后的所有部分）
+          MODEL="${BASE_NAME#*_}"
+          MODEL="${MODEL//_/ }"  # 把下划线换成空格，比如 ace5_pro -> ace5 pro
+
+          # 品牌映射：首字母大写或自定义映射
+          case "$RAW_BRAND" in
+            oneplus) BRAND="OnePlus" ;;
+            oppo)    BRAND="OPPO" ;;
+            *)       BRAND="$(echo "$RAW_BRAND" | sed 's/.*/\u&/')" ;;  # 默认只大写首字母
+          esac
+
+          echo "device=${BRAND} ${MODEL}" >> $GITHUB_OUTPUT
 
       - name: Set Environment Variable # 设置内核环境变量
         run: |
