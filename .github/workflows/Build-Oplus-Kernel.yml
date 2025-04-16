@@ -8,7 +8,7 @@ on:
         required: true
         default: 'sm8750'
 
-      FEIL:
+      FILE:
         description: "配置文件名 // Configuration file name"
         required: true
         default: 'oneplus_13_v'
