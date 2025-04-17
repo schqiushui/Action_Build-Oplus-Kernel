@@ -69,7 +69,6 @@ jobs:
           echo "KERNEL_VERSION=$KERNEL_VERSION" >> $GITHUB_ENV
 
       - name: Parse Device Name # 解析机型名称
-        id: deviceinfo
         run: |
           FILE="${{ inputs.FILE }}"
 
@@ -91,8 +90,8 @@ jobs:
             *)       BRAND="$(echo "$RAW_BRAND" | sed 's/.*/\u&/')" ;;  # 默认只大写首字母
           esac
 
-          echo "brand=${BRAND}" >> $GITHUB_OUTPUT
-          echo "model=${MODEL}" >> $GITHUB_OUTPUT
+          echo "BRAND=${BRAND}" >> $GITHUB_ENV
+          echo "MODEL=${MODEL}" >> $GITHUB_ENV
           echo "Device 机型：${BRAND} ${MODEL}"
 
       - name: Set Environment Variable # 设置内核环境变量
@@ -328,11 +327,11 @@ jobs:
       - name: Create Release version and upload # 创建正式版本并上传
         uses: softprops/action-gh-release@v2
         with:
-          name: "内核发布: ${{ steps.deviceinfo.outputs.brand }}$-{{ steps.deviceinfo.outputs.model }}-${{ steps.formatted_date.outputs.formatted }}"
+          name: "内核发布: ${{ env.BRAND }}$-{{ env.MODEL }}-${{ steps.formatted_date.outputs.formatted }}"
           tag_name: "${{ inputs.FILE }}-${{ steps.formatted_date.outputs.formatted }}"
           body: |
             OnePlus Kernel Build
-            - Device 机型: `${{ steps.deviceinfo.outputs.brand }} ${{ steps.deviceinfo.outputs.model }}`
+            - Device 机型: `${{ env.BRAND }} ${{ env.MODEL }}`
             - SoC 型号: `${{ inputs.SoC }}`
             - Chipset 代号: `${{ inputs.Chipset }}`
             - KernelSU 类型: `${{ env.KSU_TYPE }}`
