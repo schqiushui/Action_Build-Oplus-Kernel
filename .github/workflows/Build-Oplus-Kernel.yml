@@ -93,6 +93,7 @@ jobs:
 
           echo "brand=${BRAND}" >> $GITHUB_OUTPUT
           echo "model=${MODEL}" >> $GITHUB_OUTPUT
+          echo "Device 机型：${BRAND}$ {MODEL}"
 
       - name: Set Environment Variable # 设置内核环境变量
         run: |
