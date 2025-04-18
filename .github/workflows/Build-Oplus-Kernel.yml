@@ -138,7 +138,7 @@ jobs:
           mkdir "$WORKSPACE" && cd "$WORKSPACE"
           repo init -u https://github.com/schqiushui/kernel_manifest.git -b refs/heads/oneplus/${{ inputs.SoC }} -m ${{ inputs.FILE }}.xml --depth=1 || { echo "repo init 失败"; exit 1; }
           repo sync -c -j$(nproc --all) --no-tags || { echo "repo sync 失败"; exit 1; }
-          git clone https://github.com/schqiushui/clang_host_linux-x86_clang-r522817.git $PLATFORM/prebuilts/clang/host/linux-x86/clang-r522817
+          #git clone https://github.com/schqiushui/clang_host_linux-x86_clang-r522817.git $PLATFORM/prebuilts/clang/host/linux-x86/clang-r522817
 
       - name: Get KernelSU version # 获取 KernelSU 版本
         if: ${{ startsWith(inputs.KSU_CONFIG, 'SukiSU') }}
